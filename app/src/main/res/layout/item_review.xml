@@ -6,51 +6,45 @@
     <data>
 
         <variable
-            name="movie"
-            type="com.bilgiyon.pttemfilmuygulamasi.model.movie.MovieResults" />
+            name="review"
+            type="com.bilgiyon.pttemfilmuygulamasi.model.reviews.MovieReviewResult" />
     </data>
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:elevation="8dp">
+        android:layout_height="wrap_content">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
 
-            <ImageView
-                android:id="@+id/movieimage"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/txtauthor"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
-                app:imageUrl="@{movie.poster_path}"
+                android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+                android:text="@{review.author}"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:src="@mipmap/ic_launcher" />
+                tools:text="Author" />
 
             <TextView
-                android:id="@+id/moviename"
+                android:id="@+id/txtcontent"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="8dp"
-                android:gravity="center"
-                android:singleLine="true"
-                android:text="@{movie.title}"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                android:text="@{review.content}"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/movieimage"
-                tools:text="Header asdassssssssssss" />
+                app:layout_constraintEnd_toEndOf="@+id/txtauthor"
+                app:layout_constraintStart_toStartOf="@+id/txtauthor"
+                app:layout_constraintTop_toBottomOf="@+id/txtauthor"
+                tools:text="TextView" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>
 </layout>

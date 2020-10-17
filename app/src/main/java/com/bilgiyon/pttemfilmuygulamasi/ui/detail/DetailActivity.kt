@@ -1,80 +1,93 @@
 package com.bilgiyon.pttemfilmuygulamasi.ui.detail
 
+import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import com.bilgiyon.pttemfilmuygulamasi.MainActivity
+import androidx.lifecycle.Observer
 import com.bilgiyon.pttemfilmuygulamasi.R
-import com.bilgiyon.pttemfilmuygulamasi.data.MovieModel
-import com.bilgiyon.pttemfilmuygulamasi.data.MovieRepository
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.bumptech.glide.request.RequestOptions
+import com.bilgiyon.pttemfilmuygulamasi.common.BaseActivity
+import com.bilgiyon.pttemfilmuygulamasi.common.DetailTabPagerAdapter
+import com.bilgiyon.pttemfilmuygulamasi.databinding.ActivityDetailBinding
+import com.bilgiyon.pttemfilmuygulamasi.model.movie.MovieResults
+import com.bilgiyon.pttemfilmuygulamasi.util.Constants
+import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.synthetic.main.activity_detail.*
 
-class DetailActivity : AppCompatActivity() {
-    lateinit var movieRepository: MovieRepository
+class DetailActivity : BaseActivity<ActivityDetailBinding, DetailViewModel>() {
+    private var movie: MovieResults? = null
+    private var isFav: Boolean? = null
+
+    override fun getLayoutRes(): Int = R.layout.activity_detail
+
+    override fun getViewModel(): Class<DetailViewModel> = DetailViewModel::class.java
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_detail)
 
-        movieRepository = MovieRepository(this)
-        val movieModel = intent.getSerializableExtra("selectedmovie") as? MovieModel
+        setupUI()
 
-
-        toolbar.title = movieModel?.title
-
-        releasedate.text = movieModel?.release_date
-        originalmoviename.text = movieModel?.original_title
-        overview.text = movieModel?.overview
-
-        val posterPath: String?
-        var fullPosterPath: String? = null
-        if (movieModel?.poster_path != null && !movieModel?.poster_path.isEmpty())
-            posterPath = movieModel.poster_path
-        else
-            posterPath = movieModel?.backdrop_path
-
-        if (MainActivity.configuration != null && MainActivity.configuration!!.images != null &&
-            MainActivity.configuration!!.images.base_url != null && !MainActivity.configuration!!.images.base_url.isEmpty()
-        ) {
-            if (MainActivity.configuration!!.images.poster_sizes != null) {
-                if (MainActivity.configuration!!.images.poster_sizes.size > 4) {
-                    fullPosterPath =
-                        MainActivity.configuration!!.images.base_url + MainActivity.configuration!!.images.poster_sizes.get(
-                            4
-                        ) + posterPath
-                } else {
-                    fullPosterPath =
-                        MainActivity.configuration!!.images.base_url + "w500" + posterPath
-                }
-            }
+        intent.extras.let {
+            movie = it?.getParcelable(Constants.EXTRA_POPULAR_MOVIES)
+            setupViewPager(movie)
+            fabBehaviour(movie)
+            checkFav()
+            btnfav.setOnClickListener { favorite() }
+            detail_tabs.setupWithViewPager(detail_viewpager)
+            dataBinding.movie = movie
         }
+    }
 
-        if (fullPosterPath != null) {
-            Glide.with(this).load(posterPath)
-                .thumbnail(Glide.with(this).load(fullPosterPath))
-                .apply(RequestOptions.centerCropTransform())
-                .transition(DrawableTransitionOptions.withCrossFade()).into(imageview)
-        }
+    private fun setupUI() {
+        setSupportActionBar(detail_toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+    }
 
-        btnfav.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                addRemoveFavorites(movieModel)
+    private fun setupViewPager(movie: MovieResults?) {
+        val adapter = DetailTabPagerAdapter(supportFragmentManager, movie)
+        detail_viewpager.adapter = adapter
+    }
+
+    private fun fabBehaviour(movie: MovieResults?) {
+        detail_appbarlayout.addOnOffsetChangedListener(AppBarLayout.OnOffsetChangedListener { appBarLayout, verticalOffset ->
+            if (Math.abs(verticalOffset) - appBarLayout.totalScrollRange == 0) {
+                btnfav.hide()
+                supportActionBar?.setDisplayShowTitleEnabled(true)
+                detail_toolbar.title = this.movie?.title
+            } else {
+                btnfav.show()
+                supportActionBar?.setDisplayShowTitleEnabled(false)
+                detail_toolbar.title = " "
             }
+        })
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            detail_collapsing_toolbarlayout.setExpandedTitleColor(
+                resources.getColor(
+                    android.R.color.transparent,
+                    null
+                )
+            )
+        } else {
+            detail_collapsing_toolbarlayout.setExpandedTitleColor(resources.getColor(android.R.color.transparent))
+        }
+    }
 
+    private fun checkFav() {
+        viewModel.getSingleMovie(movie?.movieId).observe(this, Observer {
+            if (it != null) {
+                btnfav.setImageDrawable(resources.getDrawable(R.drawable.ic_fav, null))
+                isFav = true
+            } else {
+                btnfav.setImageDrawable(resources.getDrawable(R.drawable.ic_favorite_border, null))
+                isFav = false
+            }
         })
     }
 
-    fun addRemoveFavorites(movieModel: MovieModel?) {
-        val selectedMovie = movieRepository.getFavoriteMovie(movieModel?.id)
-        if (selectedMovie == null) {
-            movieRepository.insertFavoriteMovie(movieModel)
-            Toast.makeText(this,"Favorilere Eklendi",Toast.LENGTH_LONG).show()
+    private fun favorite() {
+        if (isFav!!) {
+            viewModel.deleteMovie(movie)
         } else {
-            movieRepository.deleteFavoriteMovie(movieModel)
-            Toast.makeText(this,"Favorilerden Silindi",Toast.LENGTH_LONG).show()
+            viewModel.insertMovie(movie)
         }
     }
 }
